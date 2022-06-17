@@ -11,8 +11,12 @@ import time
 from selenium.webdriver.support.ui import Select
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import simplejson
-
+import requests
+import ast
 # requires pip simplejson, selenium and DesiredCapabilities
+code = ''
+if not code:
+    raise Exception("ENTER THE CODE HERE")
 
 def process_browser_log_entry(entry):
     response = json.loads(entry['message'])['message']
@@ -73,15 +77,22 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         f = get_feedback()
-        self.wfile.write(str(f['body']).encode("utf-8"))
+        url = 'https://clearautomation.azurewebsites.net/api/evaluate_feedback?code=' + code
+        myobj = str(f['body']).encode("utf-8")
+        
+        x = requests.post(url, json = json.loads(myobj))
+        print(x.content)
+        self.wfile.write(x.content)
         self.wfile.close()
+        #self.wfile.write()
+        #self.wfile.close()
+
         
     def do_POST(self):
         self.data_string = self.rfile.read(int(self.headers['Content-Length']))
         data = simplejson.loads(self.data_string)
         self.send_response(200)
         add_feedback(data)
-
 
 server = HTTPServer(('', 8091), RequestHandler)
 server.serve_forever()
